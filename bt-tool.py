@@ -1,24 +1,5 @@
-#    BT-Tool - Tool for dealing with Bundestag documents
-#    Copyright (C) 2020 Sebastian Matthias Schlerka
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 import os, platform, hashlib, glob, webbrowser, time, re#, biblib
 
-
-
-# Festlegen der Pfade
 xmlPath = 'xml'
 pdfPath = 'pdf'
 bibPath = 'bib'
@@ -26,7 +7,6 @@ txtPath = 'full-text'
 dbPath = 'in-db'
 nondbPath = 'not-in-database'
 
-# Überprüfung des Betriebssystems für Clearscreen
 if platform.system() == 'Linux' or 'Darwin':
     sys = 'unix'
 elif platform.system() == 'Windows':
@@ -267,10 +247,9 @@ def extracttxt(x):
     xml.close
     txt.close
 
-def readbib(x): # Liest eine BibTeX-Datei x ein und gibt je eine Listenvariable mit allen Drucksachen (drsvorhanden) und Plenarprotokollen (ppvorhanden) aus -- FINAL
+def readbib(x): # Reads a BibTeX file x and returns two lists: drsvorhanden and ppvorhanden
     global drsvorhanden
     global ppvorhanden
-    #global bibitems #Hinterher löschen, soll nur zu Testzwecken ausgegeben werden
     ppvorhanden = []
     drsvorhanden = []
     bibitems = []
@@ -286,7 +265,7 @@ def readbib(x): # Liest eine BibTeX-Datei x ein und gibt je eine Listenvariable 
             bibitems.append(lineslist[i])
             counter = bibitems.index(lineslist[i])
         bibitems[counter] = bibitems[counter] + lineslist[i]
-
+        
     p = re.compile('Plenarprotokoll', re.IGNORECASE)
     for i in range(0, len(bibitems)):
         if re.search(p, bibitems[i]):
@@ -296,10 +275,6 @@ def readbib(x): # Liest eine BibTeX-Datei x ein und gibt je eine Listenvariable 
         else:
             m = re.search('(?<=[Nn][Uu][Mm][Bb][Ee][Rr])\s{1,2}\=\s{1,2}\{\d{1,2}\/\d{1,5}', bibitems[i])
             drsvorhanden.append(m[0])
-
-    #print(ppvorhanden)  #Zu Testzwecken
-    #print(drsvorhanden) #Zu Testzwecken
-
     for i in range(0, len(drsvorhanden)):
         m = re.match('\s*\=\s*\{', drsvorhanden[i])
         drsvorhanden[i] = drsvorhanden[i].replace(m[0], '')
@@ -313,12 +288,9 @@ def readbib(x): # Liest eine BibTeX-Datei x ein und gibt je eine Listenvariable 
             ppvorhanden[i] = ppvorhanden[i].replace('/', '/0')
         ppvorhanden[i] = ppvorhanden[i].replace('/', '')
 
-    #print(ppvorhanden)  #Zu Testzwecken
-    #print(drsvorhanden) #Zu Testzwecken
+    return ppvorhanden, drsvorhanden
 
-    return ppvorhanden, drsvorhanden#, bibitems
-
-def xmltobib(x): # Übersetzer von Bundestags-XML zu .bib -- FINAL
+def xmltobib(x):
     xml = open(os.path.join(xmlPath, x), 'r')
     lineslist = xml.readlines()
     bib = open(os.path.join(bibPath, x.replace('xml', 'bib')), 'w')
@@ -429,7 +401,7 @@ def xmltobib(x): # Übersetzer von Bundestags-XML zu .bib -- FINAL
     bib.close
     out.close
 
-def filterxmlbib(): # Filtert aus allen XML-Dateien (Drs und PP) diejenigen heraus, die in der .bib vorkommen #FÜR FINAL: Kopieren noch auf löschen umstellen, wenn bit == 0
+def filterxmlbib():
     for j in os.listdir(xmlPath):
         bit = 0
         for i in range(0, len(drsvorhanden)):
@@ -443,7 +415,7 @@ def filterxmlbib(): # Filtert aus allen XML-Dateien (Drs und PP) diejenigen hera
         if bit == 1:
             xmltobib(os.path.join(xmlPath, j))
 
-def filterxmlpdf(): # Filtert aus allen XML-Dateien diejenigen heraus, die als PDF (Originalnamen) vorliegen
+def filterxmlpdf():
     main()
 
 def filterInDatabase():
@@ -464,7 +436,7 @@ def filterInDatabase():
                 break
     return drspdf, pppdf
 
-def comparePdf(): # Sortiert PDF-Dateien im Stammordner in dbPath, wenn sie in der Bib-Datei enthalten sind, und in nondbPath, wenn sie nicht enthalten sind; hängt von der vorherigen Ausführung von filterInDatabase ab!
+def comparePdf():
     for x in glob.glob('*.pdf'):
         inDB = 0
         hash1 = hashlib.md5()
@@ -498,16 +470,6 @@ def comparePdf(): # Sortiert PDF-Dateien im Stammordner in dbPath, wenn sie in d
                 oldfile = x
                 newfile = os.path.join(dbPath, x)
                 os.rename(oldfile, newfile)
-            #else:
-            #    oldfile = x
-            #    newfile = os.path.join(nondbPath, x)
-            #    os.rename(oldfile, newfile)
-
-def test():
-    print(ppvorhanden)
-    print('Anzahl Plenarprotokolle: ', len(ppvorhanden))
-    print(drsvorhanden)
-    print('Anzahl Drucksachen: ', len(drsvorhanden))
 
 main()
 
