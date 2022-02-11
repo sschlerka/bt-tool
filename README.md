@@ -10,6 +10,7 @@ A small Python script that extracts metadata from XML files provided by the Germ
 - `in-db`: Put *renamed* PDF files here
 
 ## Usage
+The program comes with a command-line user interface in German.
 
 
 ## Citation
